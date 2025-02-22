@@ -13,7 +13,7 @@ export async function fetchImages(query, page = 1, perPage = 40) {
         orientation: "horizontal",
         safesearch: true,
         page: page,
-        perPage: perPage,
+        per_page: perPage, // Ось тут виправлено!
       },
     });
 

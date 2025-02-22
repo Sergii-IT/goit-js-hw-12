@@ -4,9 +4,8 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 
 let lightbox = null; // Створюю змінну для SimpleLightbox
 
-export function renderGallery(images) {
+export function renderGallery(images, append = false) {
   const gallery = document.querySelector("#gallery");
-  gallery.innerHTML = ""; // Очищаю попередні результати
 
   const markup = images
     .map(
@@ -25,15 +24,19 @@ export function renderGallery(images) {
     )
     .join("");
 
-  gallery.innerHTML = markup;
+  if (!append) {
+    gallery.innerHTML = markup; // Очищаємо тільки при першому запиті
+  } else {
+    gallery.insertAdjacentHTML("beforeend", markup); // Додаємо нові зображення
+  }
 
-  // Ініціалізація SimpleLightbox або оновлення
+  // Ініціалізація або оновлення SimpleLightbox
   if (!lightbox) {
     lightbox = new SimpleLightbox("#gallery a", {
       captionsData: "alt",
       captionDelay: 250,
     });
   } else {
-    lightbox.refresh(); // Оновлюється після додавання нових зображень
+    lightbox.refresh();
   }
 }

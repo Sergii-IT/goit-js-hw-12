@@ -17,38 +17,39 @@ const perPage = 40;
 
 // Налаштування iziToast
 iziToast.settings({
-  resetOnHover: true, // Не закривати повідомлення при наведенні
+  resetOnHover: true,
 });
 
 // отримання зображень із завантажувачем
-async function fetchImagesWithLoader(query, page) {
-  iziToast.info({
-    title: "Info",
-    message: "Loading...",
-    position: "topRight",
-    timeout: false, // Повідомлення не зникає автоматично
-  });
+async function fetchImagesWithLoader(query, page = 1) {
+  if (page === 1) {
+    iziToast.info({
+      title: "Info",
+      message: "Loading...",
+      position: "topRight",
+      timeout: false,
+    });
+  }
 
-  loader.classList.remove("hidden"); // Показую анімований спінер
+  loader.classList.remove("hidden");
 
   try {
-    const { images, totalHits } = await fetchImages(query, page, perPage);
-    return { images, totalHits };
+    return await fetchImages(query, page, perPage);
   } catch (error) {
     console.error("Error fetching images:", error);
     throw error;
   } finally {
-    loader.classList.add("hidden"); // Ховаю спінер після завантаження
-    iziToast.destroy(); // Видаляємо всі iziToast повідомлення
+    loader.classList.add("hidden");
+    iziToast.destroy();
   }
 }
 
-// Обробник форми
+// Обробник форми (пошук)
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  searchQuery = form.searchQuery.value.trim();
-  if (!searchQuery)if (!query) {
+  const query = form.searchQuery.value.trim();
+  if (!query) {
     iziToast.warning({
       title: "Warning",
       message: "Please enter a search term",
@@ -56,36 +57,29 @@ form.addEventListener("submit", async (event) => {
     });
     return;
   }
+
+  searchQuery = query;
   currentPage = 1;
   gallery.innerHTML = "";
   loadMoreBtn.classList.add("hidden");
 
   try {
     const { images, totalHits } = await fetchImagesWithLoader(searchQuery, currentPage);
+
     if (!images || images.length === 0) {
       iziToast.error({
         title: "Error",
-        message: "Sorry, there are no images matching your search query. Please try again!",
+        message: "Sorry, there are no images matching your search query.",
         position: "topRight",
       });
       return;
     }
 
-    // gallery.innerHTML = ""; // Очищення перед новим запитом
-    renderGallery(images);
-    lightbox.refresh(); // Оновлення SimpleLightbox після рендеру
-    
-    smoothScroll();
+    renderGallery(images, false); // <--- Очищаємо галерею перед рендером нових фото
+    lightbox.refresh();
 
-    if (currentPage * perPage >= totalHits) {
-      iziToast.info({
-        title: "Info",
-        message: "You've reached the end of search results.",
-        position: "topRight",
-      });
-      loadMoreBtn.classList.add("hidden");
-    } else {
-      loadMoreBtn.classList.remove("hidden"); // Показуємо кнопку
+    if (images.length > 0 && images.length === perPage) {
+      loadMoreBtn.classList.remove("hidden");
     }
   } catch (error) {
     iziToast.error({
@@ -96,36 +90,25 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-// Обробник кнопки "Load more"
+// Обробник кнопки Load more (довантаження)
 loadMoreBtn.addEventListener("click", async () => {
-  currentPage++;
-
+  currentPage += 1;
   try {
-    const { images, totalHits } = await fetchImagesWithLoader(searchQuery, currentPage);
+    const { images } = await fetchImagesWithLoader(searchQuery, currentPage);
 
     if (!images || images.length === 0) {
-      iziToast.info({
-        title: "Info",
-        message: "You've reached the end of search results.",
-        position: "topRight",
-      });
-      loadMoreBtn.classList.add("hidden");
-      return;
-    }
-
-    renderGallery(images);
-    lightbox.refresh();
-    
-    smoothScroll();
-
-    if (currentPage * perPage >= totalHits) {
-      iziToast.info({
-        title: "Info",
+      iziToast.error({
+        title: "Error",
         message: "We're sorry, but you've reached the end of search results.",
         position: "topRight",
       });
       loadMoreBtn.classList.add("hidden");
+      return;
     }
+
+    renderGallery(images, true); // <--- Додаємо нові зображення до вже існуючих!
+    lightbox.refresh();
+    smoothScroll();
   } catch (error) {
     iziToast.error({
       title: "Error",
@@ -134,12 +117,3 @@ loadMoreBtn.addEventListener("click", async () => {
     });
   }
 });
-
-// Функція для плавного прокручування сторінки
-function smoothScroll() {
-  const cardHeight = document.querySelector(".gallery-item").getBoundingClientRect().height;
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: "smooth",
-  });
-}
