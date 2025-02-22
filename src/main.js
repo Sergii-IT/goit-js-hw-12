@@ -8,8 +8,12 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 const form = document.querySelector(".search-form");
 const gallery = document.querySelector("#gallery");
 const loader = document.querySelector("#loader");
+const loadMoreBtn = document.querySelector("#load-more");
 
 let lightbox = new SimpleLightbox(".gallery a");
+let currentPage = 1;
+let searchQuery = "";
+const perPage = 40;
 
 // Налаштування iziToast
 iziToast.settings({
@@ -17,7 +21,7 @@ iziToast.settings({
 });
 
 // отримання зображень із завантажувачем
-async function fetchImagesWithLoader(query) {
+async function fetchImagesWithLoader(query, page) {
   iziToast.info({
     title: "Info",
     message: "Loading...",
@@ -28,7 +32,8 @@ async function fetchImagesWithLoader(query) {
   loader.classList.remove("hidden"); // Показую анімований спінер
 
   try {
-    return await fetchImages(query);
+    const { images, totalHits } = await fetchImages(query, page, perPage);
+    return { images, totalHits };
   } catch (error) {
     console.error("Error fetching images:", error);
     throw error;
@@ -42,8 +47,8 @@ async function fetchImagesWithLoader(query) {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const query = form.searchQuery.value.trim();
-  if (!query) {
+  searchQuery = form.searchQuery.value.trim();
+  if (!searchQuery)if (!query) {
     iziToast.warning({
       title: "Warning",
       message: "Please enter a search term",
@@ -51,10 +56,12 @@ form.addEventListener("submit", async (event) => {
     });
     return;
   }
+  currentPage = 1;
+  gallery.innerHTML = "";
+  loadMoreBtn.classList.add("hidden");
 
   try {
-    const images = await fetchImagesWithLoader(query);
-
+    const { images, totalHits } = await fetchImagesWithLoader(searchQuery, currentPage);
     if (!images || images.length === 0) {
       iziToast.error({
         title: "Error",
@@ -64,9 +71,22 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
-    gallery.innerHTML = ""; // Очищення перед новим запитом
+    // gallery.innerHTML = ""; // Очищення перед новим запитом
     renderGallery(images);
     lightbox.refresh(); // Оновлення SimpleLightbox після рендеру
+    
+    smoothScroll();
+
+    if (currentPage * perPage >= totalHits) {
+      iziToast.info({
+        title: "Info",
+        message: "You've reached the end of search results.",
+        position: "topRight",
+      });
+      loadMoreBtn.classList.add("hidden");
+    } else {
+      loadMoreBtn.classList.remove("hidden"); // Показуємо кнопку
+    }
   } catch (error) {
     iziToast.error({
       title: "Error",
@@ -75,3 +95,51 @@ form.addEventListener("submit", async (event) => {
     });
   }
 });
+
+// Обробник кнопки "Load more"
+loadMoreBtn.addEventListener("click", async () => {
+  currentPage++;
+
+  try {
+    const { images, totalHits } = await fetchImagesWithLoader(searchQuery, currentPage);
+
+    if (!images || images.length === 0) {
+      iziToast.info({
+        title: "Info",
+        message: "You've reached the end of search results.",
+        position: "topRight",
+      });
+      loadMoreBtn.classList.add("hidden");
+      return;
+    }
+
+    renderGallery(images);
+    lightbox.refresh();
+    
+    smoothScroll();
+
+    if (currentPage * perPage >= totalHits) {
+      iziToast.info({
+        title: "Info",
+        message: "We're sorry, but you've reached the end of search results.",
+        position: "topRight",
+      });
+      loadMoreBtn.classList.add("hidden");
+    }
+  } catch (error) {
+    iziToast.error({
+      title: "Error",
+      message: "Something went wrong. Please try again later.",
+      position: "topRight",
+    });
+  }
+});
+
+// Функція для плавного прокручування сторінки
+function smoothScroll() {
+  const cardHeight = document.querySelector(".gallery-item").getBoundingClientRect().height;
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: "smooth",
+  });
+}
