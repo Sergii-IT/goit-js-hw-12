@@ -1,0 +1,118 @@
+/* *
+  |============================
+  | include css partials with
+  | default @import url()
+  |============================
+*/
+/* Common styles */
+@import url('./reset.css');
+@import url('./base.css');
+@import url('./container.css');
+@import url('./animations.css');
+
+/* Sections style */
+@import url('./header.css');
+@import url('./vite-promo.css');
+@import url('./badges.css');
+@import url('./back-link.css');
+@import url('./footer.css');
+
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+
+  margin-left: 156px;
+}
+
+.gallery-item {
+  width: 360px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.image-info {
+  padding: 10px;
+  background: #fff;
+  text-align: center;
+  font-size: 14px;
+}
+
+.search-form {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 36px;
+  margin-bottom: 32px;
+  height: 40px;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  
+}
+
+.search-form input {
+  width: 272px;
+  border-radius: 4px;
+  font-weight: 400;
+  font-size: 16px;
+line-height: 1.5;
+letter-spacing: 0.04em;
+color: #808080;
+}
+
+.search-form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  gap: 10px;
+  cursor: pointer;
+  background: #4e75ff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  width: 91px;
+  font-weight: 500;
+  font-size: 16px;
+line-height: 1.5;
+letter-spacing: 0.04em;
+  color: #fff;
+}
+.search-form button:hover {
+  background: #6c8cff;
+}
+
+.hidden {
+  display: none;
+}
+
+#loader {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+.loader {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
